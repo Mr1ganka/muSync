@@ -17,19 +17,23 @@ public class RoomWebSocketHandler extends TextWebSocketHandler {
     @Autowired
     private RoomService roomService;
 
+    private String roomId;
+    private String clientId;
+
+    @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String roomId = getParam(session, "roomId");
-        String clientId = getParam(session, "clientId");
+        session.getAttributes().put("clientId", clientId);
+        session.getAttributes().put("roomId", roomId);
 
         log.info("New connection for client: {} to room: {} ", clientId, roomId);
         Client client = new Client(clientId, session);
         roomService.joinRoom(roomId, client);
     }
-
+    @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {}
-
+    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String clientId = getParam(session, "clientId");
+        session.getAttributes().put("clientId", clientId);
         log.info("Client: {} closing connection for session: {} ", clientId, session.getId());
         roomService.leaveRoom(clientId);
     }
