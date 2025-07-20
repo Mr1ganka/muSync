@@ -1,0 +1,14 @@
+package com.mu.sync.backend.muSync.service;
+
+import com.mu.sync.backend.muSync.modal.Client;
+import com.mu.sync.backend.muSync.modal.Room;
+import org.springframework.stereotype.Service;
+
+public interface RoomService {
+
+    Room createOrFetchRoom(String roomId);
+
+    void joinRoom(String roomId, Client client);
+
+    void leaveRoom(String client);
+}

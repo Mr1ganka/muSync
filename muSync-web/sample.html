@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Music Sync Client</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; }
+    button { margin: 0.5rem; padding: 0.75rem 1.5rem; font-size: 16px; }
+    #log { margin-top: 2rem; white-space: pre-wrap; text-align: left; max-width: 600px; margin-inline: auto; }
+  </style>
+</head>
+<body>
+  <h2>🎵 Music Sync Client</h2>
+  <input type="text" id="roomId" placeholder="Enter Room ID" />
+  <button onclick="connect()">Connect</button>
+
+  <div id="controls" style="display:none;">
+    <h3>Room Controls</h3>
+    <button onclick="send('play')">▶️ Play</button>
+    <button onclick="send('pause')">⏸ Pause</button>
+    <button onclick="send('volume-up')">🔊 Volume Up</button>
+    <button onclick="send('volume-down')">🔉 Volume Down</button>
+  </div>
+
+  <div id="log"></div>
+
+  <script>
+  let socket;
+
+  const log = (msg) => {
+    const logEl = document.getElementById("log");
+    logEl.textContent += `${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight; // Auto scroll
+  };
+
+  function connect() {
+    const clientId = getOrCreateClientId();
+    const roomId = document.getElementById("roomId").value.trim();
+    if (!roomId) return alert("Room ID required");
+
+    socket = new WebSocket(`ws://localhost:8080/ws?roomId=${roomId}&clientId=${clientId}`);
+
+    socket.onopen = () => {
+      // log(`✅ Connected to room: ${roomId}`);
+      document.getElementById("controls").style.display = "block";
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("recieved: " + data)
+
+        if (data.Type === "Broadcast") {
+          log(`📩 [From ${data.From}]: ${data.Message}`);
+        }else if (data.Type === "SERVER_INFO") {
+          log(`✅ [From ${data.From}]: ${data.Message}`);
+        }  else if(data.Type === "SERVER_ERROR") {
+          log(`❌ [From ${data.From}]: ${data.Message}`);
+        } else {
+          log(`📥 [Received unknown message]: ${JSON.stringify(data)}`);
+        }
+        console.log("Full message object:", data);
+
+      } catch (err) {
+        log(`❌ Error parsing message: ${event.data}`);
+        console.error("Parse error:", err);
+      }
+    };
+
+    socket.onclose = (event) => {
+      log(`❎ Disconnected from server`);
+      document.getElementById("controls").style.display = "none";
+    };
+
+    socket.onerror = (err) => {
+      log(`⚠️ WebSocket error: ${err.message || err}`);
+      console.error("WebSocket error:", err);
+    };
+  }
+
+  function send(action) {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      log(`❌ Can't send, socket not open.`);
+      return;
+    }
+
+    socket.send(action);
+    log(`📤 [You sent]: ${action}`);
+  }
+
+  function getOrCreateClientId() {
+    let clientId = localStorage.getItem("clientId");
+    if (!clientId) {
+      clientId = `client-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      localStorage.setItem("clientId", clientId);
+    }
+    return clientId;
+  }
+</script>
+</body>
+</html>
