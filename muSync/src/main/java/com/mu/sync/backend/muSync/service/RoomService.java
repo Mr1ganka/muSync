@@ -17,4 +17,6 @@ public interface RoomService {
     Optional<Room> fetchRoom(String roomId);
 
     Optional<Room> fetchRoomUsingClientId(String clientId);
+
+    String generateRoomIdBasedOnTime();
 }

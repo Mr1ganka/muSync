@@ -6,6 +6,8 @@ import com.mu.sync.backend.muSync.service.RoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +17,14 @@ public class InMemoryRoomServiceImpl implements RoomService {
 
     private static final ConcurrentHashMap<String, Room> rooms = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> clientToRoom = new ConcurrentHashMap<>();
+
+
+    @Override
+    public String generateRoomIdBasedOnTime() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyyHHmmssSSSSSS");
+        return now.format(formatter);
+    }
 
     @Override
     public Optional<Room> fetchRoom(String roomId) {

@@ -25,7 +25,8 @@ public class RoomWebSocketHandler extends TextWebSocketHandler {
     @Autowired
     private RoomService roomService;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper mapper;
 
     enum serverMessages {
         JOINED_ROOM ("JOINED_ROOM"),
