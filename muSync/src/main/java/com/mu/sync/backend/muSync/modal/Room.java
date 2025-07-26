@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,5 +24,9 @@ public class Room {
 
     public Optional<Client> getClient(String clientId) {
         return Optional.ofNullable(clients.get(clientId));
+    }
+
+    public Collection<Client> getClients () {
+        return clients.values();
     }
 }

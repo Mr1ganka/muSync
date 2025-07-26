@@ -6,6 +6,7 @@ import com.mu.sync.backend.muSync.service.RoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -14,6 +15,23 @@ public class InMemoryRoomServiceImpl implements RoomService {
 
     private static final ConcurrentHashMap<String, Room> rooms = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> clientToRoom = new ConcurrentHashMap<>();
+
+    @Override
+    public Optional<Room> fetchRoom(String roomId) {
+        if (rooms.containsKey(roomId))
+            return Optional.ofNullable(rooms.get(roomId));
+        else
+            return Optional.empty();
+    }
+
+    @Override
+    public Optional<Room> fetchRoomUsingClientId(String clientId) {
+        if (clientToRoom.containsKey(clientId)) {
+            String roomId = clientToRoom.get(clientId);
+            return Optional.of(rooms.get(roomId));
+        } else
+            return Optional.empty();
+    }
 
     @Override
     public Room createOrFetchRoom(String roomId) {
