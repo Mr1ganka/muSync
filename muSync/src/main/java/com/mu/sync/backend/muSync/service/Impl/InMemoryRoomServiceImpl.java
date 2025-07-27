@@ -2,6 +2,8 @@ package com.mu.sync.backend.muSync.service.Impl;
 
 import com.mu.sync.backend.muSync.modal.Client;
 import com.mu.sync.backend.muSync.modal.Room;
+import com.mu.sync.backend.muSync.modal.Response.ClientResponse;
+import com.mu.sync.backend.muSync.service.ClientService;
 import com.mu.sync.backend.muSync.service.RoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,12 +15,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-public class InMemoryRoomServiceImpl implements RoomService {
+public class InMemoryRoomServiceImpl implements RoomService, ClientService {
 
     private static final ConcurrentHashMap<String, Room> rooms = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> clientToRoom = new ConcurrentHashMap<>();
 
 
+    // Room Services
     @Override
     public String generateRoomIdBasedOnTime() {
         LocalDateTime now = LocalDateTime.now();
@@ -95,5 +98,30 @@ public class InMemoryRoomServiceImpl implements RoomService {
         } else {
             log.warn("Tried removing client: {} but client was not in clientList ", clientId);
         }
+    }
+
+    // Client Services
+    public ClientResponse getClientDetails (String clientId) {
+        String roomId = clientToRoom.containsKey(clientId) ? clientToRoom.get(clientId) : null;
+        
+        if (roomId == null) return new ClientResponse(false, "CLIENT_DOES_NOT_EXIST", "DOES_NOT_EXIST", false );
+
+        Room room = rooms.containsKey(roomId) ? fetchRoom(roomId).get() : null;
+        if (room == null) return new ClientResponse(false, "ROOM_DOES_NOT_EXIST","DOES_NOT_EXIST", false);
+
+        return new ClientResponse(true, clientId, roomId, room.getMasterClientId().equals(clientId));
+    }
+
+    public ClientResponse makeMasterClient (String clientId) {
+        
+        String roomId = clientToRoom.containsKey(clientId) ? clientToRoom.get(clientId) : null;
+        
+        if (roomId == null) return new ClientResponse(false, "CLIENT_DOES_NOT_EXIST", "DOES_NOT_EXIST", false);
+
+        Room room = rooms.containsKey(roomId) ? fetchRoom(roomId).get() : null;
+        if (room == null) return new ClientResponse(false, "ROOM_DOES_NOT_EXIST", "DOES_NOT_EXIST" ,false);
+
+        room.setMasterClientId(clientId);
+        return new ClientResponse(true, clientId, roomId, room.getMasterClientId().equalsIgnoreCase(clientId));
     }
 }
