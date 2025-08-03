@@ -30,7 +30,12 @@ public class RoomWebSocketHandler extends TextWebSocketHandler {
 
     enum serverMessages {
         JOINED_ROOM ("JOINED_ROOM"),
-        LEFT_ROOM ("LEFT_ROOM");
+        LEFT_ROOM ("LEFT_ROOM"),
+        PLAY ("PLAY"),
+        PAUSE ("PAUSE"),
+        SEEK ("SEEK"),
+        STOP ("STOP");
+
 
         private final String stringMsg;
 
@@ -46,27 +51,41 @@ public class RoomWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload = message.getPayload();
+        String payloadMessage = message.getPayload();
         String clientId = (String) session.getAttributes().get("clientId");
         String roomId = (String) session.getAttributes().get("roomId");
 
-        log.info("Payload message {} received from session {} ", payload, session.getId());
+        log.info("Payload message {} received from session {} ", payloadMessage, session.getId());
 
         if (clientId == null || roomId == null ) {
             log.warn("Either client id: {} or roomId: {} is empty ", clientId, roomId);
             return;
         }
 
-        MessageDto incoming = mapper.readValue(payload, MessageDto.class);
-
-        MessageDto outGoing = new MessageDto(incoming.getType(), clientId, incoming.getMessage());
+        MessageDto incoming = mapper.readValue(payloadMessage, MessageDto.class);
 
         Optional<Room> room = roomService.fetchRoom(roomId);
 
-        if(room.isPresent())
-            broadcastToRoom(room.get(), outGoing, false, clientId );
-        else
+        if(room.isEmpty())
             log.warn("Room wasn't found for roomId: {}", roomId);
+        else {
+            switch (incoming.getType()) {
+                case "PLAY":
+                case "PAUSE":
+                case "SEEK":
+                     {
+                        MessageDto outGoing = new MessageDto(incoming.getType(), clientId, incoming.getMessage());
+                        broadcastToRoom(room.get(), outGoing, false, clientId );
+                        break;
+                    }
+                
+                default:
+                    log.warn("Unknown message type: {}", incoming.getType());
+            }
+            
+        }
+            
+        
     }
 
     public void broadcastToRoom(Room room, MessageDto messageDto, boolean includeSender, String senderId) throws IOException {
